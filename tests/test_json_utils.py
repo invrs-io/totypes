@@ -81,7 +81,6 @@ class SerializeDeserializeTest(unittest.TestCase):
             onp.testing.assert_array_equal(leaf, expected_leaf)
 
     def test_serialize_with_custom_namedtuple(self):
-        
         class CustomObject(NamedTuple):
             x: onp.ndarray
             y: int
@@ -101,7 +100,6 @@ class SerializeDeserializeTest(unittest.TestCase):
         self.assertEqual(restored.z, obj.z)
 
     def test_serialize_with_custom_dataclass(self):
-
         @dataclasses.dataclass
         class CustomObject:
             x: onp.ndarray
@@ -126,4 +124,3 @@ class TestAllCustomTypesHaveAPrefix(unittest.TestCase):
     def test_all_custom_types_have_a_prefix(self):
         custom_types = [t for t, _ in json_utils.CUSTOM_TYPES_AND_PREFIXES]
         self.assertEqual(set(custom_types), set(types.CUSTOM_TYPES))
-        
