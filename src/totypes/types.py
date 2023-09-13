@@ -8,7 +8,8 @@ import jax.core
 import jax.numpy as jnp
 import numpy as onp
 
-ArrayOrScalar = Union[jnp.ndarray, float, int]
+Array = Union[jnp.ndarray, onp.ndarray]
+ArrayOrScalar = Union[Array, float, int]
 PyTree = Any
 
 
@@ -22,7 +23,7 @@ class BoundedArray:
     """Stores an array, along with optional declared lower and upper bounds.
 
     Attributes:
-        array: A jax array or a python scalar.
+        array: A jax or numpy array, or a python scalar.
         lower_bound: The optional declared lower bound for `array`; must be
             broadcast compatible with `array`.
         upper_bound: The optional declared upper bound for `array`.
@@ -35,7 +36,7 @@ class BoundedArray:
     def __post_init__(self) -> None:
         # Attributes may be strings if they are serialized, or jax tracers
         # e.g. when computing gradients. Avoid validation in these cases.
-        if not isinstance(self.array, (jnp.ndarray, int, float)):
+        if not isinstance(self.array, (jnp.ndarray, onp.ndarray, int, float)):
             return
 
         if self.lower_bound is not None and (
@@ -127,7 +128,7 @@ class Density2DArray:
     obtained.
 
     Attributes:
-        array: The density array, with at least rank 2.
+        array: A jax or numpy array representing density, with at least rank 2.
         lower_bound: The numeric value associated with solid pixels.
         upper_bound: The numeric value associated with void pixels.
         fixed_solid: Optional array identifying pixels to be fixed solid.
@@ -136,11 +137,11 @@ class Density2DArray:
         minimum_spacing: The minimum spacing of solid features.
     """
 
-    array: jnp.ndarray
+    array: Array
     lower_bound: float
     upper_bound: float
-    fixed_solid: Optional[jnp.ndarray]
-    fixed_void: Optional[jnp.ndarray]
+    fixed_solid: Optional[Array]
+    fixed_void: Optional[Array]
     minimum_width: int
     minimum_spacing: int
 
@@ -204,7 +205,7 @@ class Density2DArray:
 def _flatten_density_2d(
     density: Density2DArray,
 ) -> Tuple[
-    Tuple[jnp.ndarray],
+    Tuple[Array],
     Tuple[float, float, "_HashableWrapper", "_HashableWrapper", int, int],
 ]:
     """Flattens a `Density2D` into children and auxilliary data."""
@@ -223,7 +224,7 @@ def _flatten_density_2d(
 
 def _unflatten_density_2d(
     aux: Tuple[float, float, "_HashableWrapper", "_HashableWrapper", int, int],
-    children: Tuple[jnp.ndarray],
+    children: Tuple[Array],
 ) -> Density2DArray:
     """Unflattens a flattened `Density2D`."""
     (array,) = children
@@ -262,7 +263,7 @@ jax.tree_util.register_pytree_node(
 class _HashableWrapper:
     """Wraps arrays or scalars, making them hashable."""
 
-    array: Optional[Union[onp.ndarray, jnp.ndarray, float]]
+    array: Optional[ArrayOrScalar]
 
     def __hash__(self) -> int:
         if isinstance(self.array, (onp.ndarray, jnp.ndarray)):
@@ -323,3 +324,10 @@ def extract_upper_bound(params: PyTree) -> PyTree:
 def _has_bounds(x: Any) -> bool:
     """Returns `True` if `x` has bounds."""
     return isinstance(x, (BoundedArray, Density2DArray))
+
+
+# Declare the custom types defined in this module.
+CUSTOM_TYPES = (
+    BoundedArray,
+    Density2DArray,
+)
