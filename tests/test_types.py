@@ -1,4 +1,4 @@
-"""Defines tests for the `totypes` module."""
+"""Defines tests for the `totypes.types` module."""
 
 import unittest
 
@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import numpy as onp
 import parameterized
 
-import totypes
+from totypes import types
 
 
 class BoundedArrayTest(unittest.TestCase):
@@ -16,7 +16,7 @@ class BoundedArrayTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "`lower_bound` has shape incompatible "
         ):
-            totypes.BoundedArray(
+            types.BoundedArray(
                 array=jnp.ones((5, 4, 3)),
                 lower_bound=jnp.ones(invalid_bound_shape),
                 upper_bound=None,
@@ -27,27 +27,27 @@ class BoundedArrayTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "`upper_bound` has shape incompatible "
         ):
-            totypes.BoundedArray(
+            types.BoundedArray(
                 array=jnp.ones((5, 4, 3)),
                 lower_bound=None,
                 upper_bound=jnp.ones(invalid_bound_shape),
             )
 
-    def test_flatten_unflatten_single_array(self):
-        ba = totypes.BoundedArray(
+    def test_flatten_unflatten_single_array_jax(self):
+        ba = types.BoundedArray(
             array=jnp.arange(0, 10),
             lower_bound=jnp.arange(-1, 9),
             upper_bound=jnp.arange(1, 11),
         )
         leaves, treedef = jax.tree_util.tree_flatten(ba)
         restored_ba = jax.tree_util.tree_unflatten(treedef, leaves)
-        onp.testing.assert_array_equal(ba, restored_ba)  # type: ignore
+        onp.testing.assert_array_equal(ba, restored_ba)
 
 
 class Density2DArrayTest(unittest.TestCase):
     def test_density_ndim_validation(self):
         with self.assertRaisesRegex(ValueError, "`array` must be at least rank-2,"):
-            totypes.Density2DArray(
+            types.Density2DArray(
                 array=jnp.arange(10),
                 lower_bound=-1.0,
                 upper_bound=1.0,
@@ -61,7 +61,7 @@ class Density2DArrayTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "`fixed_solid` must have shape matching `array`"
         ):
-            totypes.Density2DArray(
+            types.Density2DArray(
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
@@ -75,7 +75,7 @@ class Density2DArrayTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "`fixed_void` must have shape matching `array`"
         ):
-            totypes.Density2DArray(
+            types.Density2DArray(
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
@@ -89,7 +89,7 @@ class Density2DArrayTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "`fixed_solid` must be bool-typed but got"
         ):
-            totypes.Density2DArray(
+            types.Density2DArray(
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
@@ -103,7 +103,7 @@ class Density2DArrayTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "`fixed_void` must be bool-typed but got"
         ):
-            totypes.Density2DArray(
+            types.Density2DArray(
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
@@ -117,7 +117,7 @@ class Density2DArrayTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError, "Got incompatible `fixed_solid` and `fixed_void`"
         ):
-            totypes.Density2DArray(
+            types.Density2DArray(
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
@@ -128,7 +128,7 @@ class Density2DArrayTest(unittest.TestCase):
             )
 
     def test_flatten_unflatten_single_density(self):
-        density = totypes.Density2DArray(
+        density = types.Density2DArray(
             array=jnp.arange(0, 10).reshape(2, 5),
             lower_bound=-1.0,
             upper_bound=1.0,
@@ -139,4 +139,4 @@ class Density2DArrayTest(unittest.TestCase):
         )
         leaves, treedef = jax.tree_util.tree_flatten(density)
         restored_density = jax.tree_util.tree_unflatten(treedef, leaves)
-        onp.testing.assert_array_equal(density, restored_density)  # type: ignore
+        onp.testing.assert_array_equal(density, restored_density)
