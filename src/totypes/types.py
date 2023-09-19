@@ -287,7 +287,7 @@ def _unflatten_density_2d(
         fixed_void=wrapped_fixed_void.array,
         minimum_width=minimum_width,
         minimum_spacing=minimum_spacing,
-        periodic=tuple(periodic),
+        periodic=tuple(periodic),  # type: ignore[arg-type]
         symmetries=tuple(symmetries),
     )
 
@@ -301,9 +301,7 @@ tree_util.register_pytree_node(
 
 def symmetrize_density(density: Density2DArray) -> Density2DArray:
     """Return a `density` with array having the specified `symmetries`."""
-    symmetrized: Density2DArray = symmetry.symmetrize(
-        density, tuple(density.symmetries)
-    )
+    symmetrized: Density2DArray = symmetry.symmetrize(density, density.symmetries)
     return symmetrized
 
 
