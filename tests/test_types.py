@@ -127,6 +127,13 @@ class Density2DArrayTest(unittest.TestCase):
                 minimum_spacing=1,
             )
 
+    @parameterized.expand([[(True, True, True)], [(False,)], [(1, False)]])
+    def test_periodic_validation(self, invalid_periodic):
+        with self.assertRaisesRegex(ValueError, "`periodic` must be length-2"):
+            types.Density2DArray(
+                array=jnp.arange(10).reshape(5, 2), periodic=invalid_periodic
+            )
+
     def test_symmetry_validation(self):
         with self.assertRaisesRegex(ValueError, "Found unrecognized symmetry:"):
             types.Density2DArray(

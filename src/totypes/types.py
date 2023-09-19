@@ -205,7 +205,10 @@ class Density2DArray:
         if len(self.periodic) != 2 or any(
             not isinstance(p, bool) for p in self.periodic
         ):
-            raise ValueError(f"`periodic` must be length-2 but got {self.periodic}.")
+            raise ValueError(
+                f"`periodic` must be length-2 sequence of `bool` but got "
+                f"{self.periodic}."
+            )
         if not all(s in symmetry.SYMMETRY_FNS for s in self.symmetries):
             raise ValueError(f"Found unrecognized symmetry: {self.symmetries}.")
         if (self.array.shape[-2] != self.array.shape[-1]) and any(
@@ -238,7 +241,6 @@ def _flatten_density_2d(
     ],
 ]:
     """Flattens a `Density2D` into children and auxilliary data."""
-    periodic: Tuple[bool, bool] = tuple(density.periodic)  # type: ignore[assignment]
     return (
         (density.array,),
         (
@@ -248,7 +250,7 @@ def _flatten_density_2d(
             _HashableWrapper(density.fixed_void),
             density.minimum_width,
             density.minimum_spacing,
-            periodic,
+            density.periodic,
             density.symmetries,
         ),
     )
