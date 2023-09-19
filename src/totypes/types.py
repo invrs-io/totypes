@@ -205,6 +205,15 @@ class Density2DArray:
                 "Got incompatible `fixed_solid` and `fixed_void`; these must "
                 "not be `True` at the same indices."
             )
+        if not isinstance(self.minimum_width, int) or self.minimum_width < 1:
+            raise ValueError(
+                f"`minimum_width` must be a postive int, but got {self.minimum_width}"
+            )
+        if not isinstance(self.minimum_spacing, int) or self.minimum_spacing < 1:
+            raise ValueError(
+                f"`minimum_spacing` must be a postive int, but got "
+                f"{self.minimum_spacing}"
+            )
         if len(self.periodic) != 2 or any(
             not isinstance(p, bool) for p in self.periodic
         ):
