@@ -149,8 +149,8 @@ class Density2DArray:
     fixed_void: Optional[Array] = None
     minimum_width: int = 1
     minimum_spacing: int = 1
-    periodic: Sequence[bool] = (False, False)
-    symmetries: Sequence[str] = ()
+    periodic: Tuple[bool, bool] = (False, False)
+    symmetries: Tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         # Attributes may be strings if they are serialized, or jax tracers
