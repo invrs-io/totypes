@@ -127,6 +127,20 @@ class Density2DArrayTest(unittest.TestCase):
                 minimum_spacing=1,
             )
 
+    @parameterized.expand([[0], [2.0]])
+    def test_minimum_width_validation(self, invalid_min_width):
+        with self.assertRaisesRegex(ValueError, "`minimum_width` must be a"):
+            types.Density2DArray(
+                array=jnp.arange(10).reshape(5, 2), minimum_width=invalid_min_width
+            )
+
+    @parameterized.expand([[0], [2.0]])
+    def test_minimum_spacing_validation(self, invalid_min_spacing):
+        with self.assertRaisesRegex(ValueError, "`minimum_spacing` must be a"):
+            types.Density2DArray(
+                array=jnp.arange(10).reshape(5, 2), minimum_spacing=invalid_min_spacing
+            )
+
     @parameterized.expand([[(True, True, True)], [(False,)], [(1, False)]])
     def test_periodic_validation(self, invalid_periodic):
         with self.assertRaisesRegex(ValueError, "`periodic` must be length-2"):
