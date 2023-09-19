@@ -249,7 +249,7 @@ def _flatten_density_2d(
             density.minimum_width,
             density.minimum_spacing,
             periodic,
-            tuple(density.symmetries),
+            density.symmetries,
         ),
     )
 
