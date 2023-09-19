@@ -1,14 +1,13 @@
 """Defines tests for the `totypes.json_utils` module."""
 
+import dataclasses
+import unittest
 from typing import NamedTuple
 
-import unittest
-
-import dataclasses
 import jax
 import jax.numpy as jnp
 import numpy as onp
-import parameterized
+from parameterized import parameterized
 
 from totypes import json_utils, types
 
@@ -51,9 +50,7 @@ DENSITY_2D_ARRAYS = [
 
 
 class SerializeDeserializeTest(unittest.TestCase):
-    @parameterized.parameterized.expand(
-        [[a] for a in ARRAYS + BOUNDED_ARRAYS + DENSITY_2D_ARRAYS]
-    )
+    @parameterized.expand([[a] for a in ARRAYS + BOUNDED_ARRAYS + DENSITY_2D_ARRAYS])
     def test_serialize_deserialize_arrays(self, array):
         (expected_leaf,), expected_pytreedef = jax.tree_util.tree_flatten(array)
 

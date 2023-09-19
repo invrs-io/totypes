@@ -3,10 +3,11 @@
 import dataclasses
 from typing import Any, Optional, Tuple, Union
 
-import jax
-import jax.core
 import jax.numpy as jnp
 import numpy as onp
+from jax import tree_util
+
+from totypes import symmetry
 
 Array = Union[jnp.ndarray, onp.ndarray]
 ArrayOrScalar = Union[Array, float, int]
@@ -105,7 +106,7 @@ def _unflatten_bounded_array(
     )
 
 
-jax.tree_util.register_pytree_node(
+tree_util.register_pytree_node(
     BoundedArray,
     flatten_func=_flatten_bounded_array,
     unflatten_func=_unflatten_bounded_array,
@@ -123,9 +124,9 @@ class Density2DArray:
 
     Intended constraints such as the bounds, and minimum width and spacing
     of features are specified by the attributes of a `Density`. Note that
-    these are merely the intended constraints, and these must be recognized
-    by an optimizer to ensure that densities meeting the constraints are
-    obtained.
+    these are merely the intended constraints and characteristics, and these
+    must be recognized and enforced by an optimizer to ensure that densities
+    meeting the constraints are obtained.
 
     Attributes:
         array: A jax or numpy array representing density, with at least rank 2.
@@ -135,15 +136,21 @@ class Density2DArray:
         fixed_void: Optional array identifying pixels to be fixed void.
         minimum_width: The minimum width of solid features.
         minimum_spacing: The minimum spacing of solid features.
+        periodic: Specifies which of the two spatial dimensions should use
+            periodic boundary conditions.
+        symmetries: A sequence of strings specifying the symmetries of the
+            array. Some symmetries require that the array have a square shape.
     """
 
     array: Array
-    lower_bound: float
-    upper_bound: float
-    fixed_solid: Optional[Array]
-    fixed_void: Optional[Array]
-    minimum_width: int
-    minimum_spacing: int
+    lower_bound: float = -1.0
+    upper_bound: float = 1.0
+    fixed_solid: Optional[Array] = None
+    fixed_void: Optional[Array] = None
+    minimum_width: int = 1
+    minimum_spacing: int = 1
+    periodic: Tuple[bool, bool] = (False, False)
+    symmetries: Tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         # Attributes may be strings if they are serialized, or jax tracers
@@ -194,6 +201,15 @@ class Density2DArray:
             raise ValueError(
                 "Got incompatible `fixed_solid` and `fixed_void`; these must "
                 "not be `True` at the same indices."
+            )
+        if not all(s in symmetry.SYMMETRY_FNS for s in self.symmetries):
+            raise ValueError(f"Found unrecognized symmetry: {self.symmetries}.")
+        if (self.array.shape[-2] != self.array.shape[-1]) and any(
+            s in symmetry.SYMMETRIES_REQUIRING_SQUARE_ARRAYS for s in self.symmetries
+        ):
+            raise ValueError(
+                f"Some specified symmetries require a square array shape, but got a "
+                f"shape of {self.array.shape} for symmetries {self.symmetries}."
             )
 
     @property
@@ -247,11 +263,17 @@ def _unflatten_density_2d(
     )
 
 
-jax.tree_util.register_pytree_node(
+tree_util.register_pytree_node(
     Density2DArray,
     flatten_func=_flatten_density_2d,
     unflatten_func=_unflatten_density_2d,
 )
+
+
+def symmetrize_density(density: Density2DArray) -> Density2DArray:
+    """Return a `density` with array having the specified `symmetries`."""
+    symmetrized: Density2DArray = symmetry.symmetrize(density, density.symmetries)
+    return symmetrized
 
 
 # -----------------------------------------------------------------------------
@@ -307,7 +329,7 @@ def extract_lower_bound(params: PyTree) -> PyTree:
             return leaf.lower_bound
         return None
 
-    return jax.tree_util.tree_map(_extract_fn, params, is_leaf=_has_bounds)
+    return tree_util.tree_map(_extract_fn, params, is_leaf=_has_bounds)
 
 
 def extract_upper_bound(params: PyTree) -> PyTree:
@@ -318,7 +340,7 @@ def extract_upper_bound(params: PyTree) -> PyTree:
             return leaf.upper_bound
         return None
 
-    return jax.tree_util.tree_map(_extract_fn, params, is_leaf=_has_bounds)
+    return tree_util.tree_map(_extract_fn, params, is_leaf=_has_bounds)
 
 
 def _has_bounds(x: Any) -> bool:

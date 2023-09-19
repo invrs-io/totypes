@@ -5,13 +5,13 @@ import unittest
 import jax
 import jax.numpy as jnp
 import numpy as onp
-import parameterized
+from parameterized import parameterized
 
-from totypes import types
+from totypes import symmetry, types
 
 
 class BoundedArrayTest(unittest.TestCase):
-    @parameterized.parameterized.expand([[(1, 5, 4, 3)], [(5, 1, 2)]])
+    @parameterized.expand([[(1, 5, 4, 3)], [(5, 1, 2)]])
     def test_lower_bound_shape_validation(self, invalid_bound_shape):
         with self.assertRaisesRegex(
             ValueError, "`lower_bound` has shape incompatible "
@@ -22,7 +22,7 @@ class BoundedArrayTest(unittest.TestCase):
                 upper_bound=None,
             )
 
-    @parameterized.parameterized.expand([[(1, 5, 4, 3)], [(5, 1, 2)]])
+    @parameterized.expand([[(1, 5, 4, 3)], [(5, 1, 2)]])
     def test_upper_bound_shape_validation(self, invalid_bound_shape):
         with self.assertRaisesRegex(
             ValueError, "`upper_bound` has shape incompatible "
@@ -127,6 +127,21 @@ class Density2DArrayTest(unittest.TestCase):
                 minimum_spacing=1,
             )
 
+    def test_symmetry_validation(self):
+        with self.assertRaisesRegex(ValueError, "Found unrecognized symmetry:"):
+            types.Density2DArray(
+                array=jnp.arange(10).reshape(5, 2), symmetries=("invalid_symmetry",)
+            )
+
+    @parameterized.expand([["rotation_90"], ["reflection_ne_sw"], ["reflection_nw_se"]])
+    def test_symmetry_requiring_square_array(self, symmetry):
+        with self.assertRaisesRegex(
+            ValueError, "Some specified symmetries require a square"
+        ):
+            types.Density2DArray(
+                array=jnp.arange(10).reshape(5, 2), symmetries=(symmetry,)
+            )
+
     def test_flatten_unflatten_single_density(self):
         density = types.Density2DArray(
             array=jnp.arange(0, 10).reshape(2, 5),
@@ -140,3 +155,30 @@ class Density2DArrayTest(unittest.TestCase):
         leaves, treedef = jax.tree_util.tree_flatten(density)
         restored_density = jax.tree_util.tree_unflatten(treedef, leaves)
         onp.testing.assert_array_equal(density, restored_density)
+
+
+class ApplySymmetryTest(unittest.TestCase):
+    def test_symmetrize_density(self):
+        density = types.Density2DArray(
+            array=jnp.asarray(
+                [
+                    [0, 4, 0, 0, 0],
+                    [0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0],
+                ]
+            ),
+            symmetries=(symmetry.ROTATION_180,),
+        )
+        symmetrized = types.symmetrize_density(density)
+        expected = jnp.asarray(
+            [
+                [0, 2, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 2, 0],
+            ]
+        )
+        onp.testing.assert_array_equal(symmetrized.array, expected)
