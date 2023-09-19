@@ -149,8 +149,8 @@ class Density2DArray:
     fixed_void: Optional[Array] = None
     minimum_width: int = 1
     minimum_spacing: int = 1
-    periodic: Tuple[bool, bool] = (False, False)
-    symmetries: Tuple[str, ...] = ()
+    periodic: Sequence[bool] = (False, False)
+    symmetries: Sequence[str] = ()
 
     def __post_init__(self) -> None:
         # Attributes may be strings if they are serialized, or jax tracers
@@ -233,8 +233,8 @@ def _flatten_density_2d(
         "_HashableWrapper",
         int,
         int,
-        Tuple[bool, bool],
-        Tuple[str, ...],
+        Sequence[bool],
+        Sequence[str],
     ],
 ]:
     """Flattens a `Density2D` into children and auxilliary data."""
@@ -287,7 +287,7 @@ def _unflatten_density_2d(
         fixed_void=wrapped_fixed_void.array,
         minimum_width=minimum_width,
         minimum_spacing=minimum_spacing,
-        periodic=tuple(periodic),  # type: ignore[arg-type]
+        periodic=tuple(periodic),
         symmetries=tuple(symmetries),
     )
 
@@ -301,7 +301,9 @@ tree_util.register_pytree_node(
 
 def symmetrize_density(density: Density2DArray) -> Density2DArray:
     """Return a `density` with array having the specified `symmetries`."""
-    symmetrized: Density2DArray = symmetry.symmetrize(density, density.symmetries)
+    symmetrized: Density2DArray = symmetry.symmetrize(
+        density, tuple(density.symmetries)
+    )
     return symmetrized
 
 
