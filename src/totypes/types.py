@@ -1,7 +1,7 @@
 """Custom datatypes useful in an topology optimization setting."""
 
 import dataclasses
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import jax.numpy as jnp
 import numpy as onp
@@ -149,8 +149,8 @@ class Density2DArray:
     fixed_void: Optional[Array] = None
     minimum_width: int = 1
     minimum_spacing: int = 1
-    periodic: Tuple[bool, bool] = (False, False)
-    symmetries: Tuple[str, ...] = ()
+    periodic: Sequence[bool] = (False, False)
+    symmetries: Sequence[str] = ()
 
     def __post_init__(self) -> None:
         # Attributes may be strings if they are serialized, or jax tracers
@@ -202,6 +202,13 @@ class Density2DArray:
                 "Got incompatible `fixed_solid` and `fixed_void`; these must "
                 "not be `True` at the same indices."
             )
+        if len(self.periodic) != 2 or any(
+            not isinstance(p, bool) for p in self.periodic
+        ):
+            raise ValueError(
+                f"`periodic` must be length-2 sequence of `bool` but got "
+                f"{self.periodic}."
+            )
         if not all(s in symmetry.SYMMETRY_FNS for s in self.symmetries):
             raise ValueError(f"Found unrecognized symmetry: {self.symmetries}.")
         if (self.array.shape[-2] != self.array.shape[-1]) and any(
@@ -222,7 +229,16 @@ def _flatten_density_2d(
     density: Density2DArray,
 ) -> Tuple[
     Tuple[Array],
-    Tuple[float, float, "_HashableWrapper", "_HashableWrapper", int, int],
+    Tuple[
+        float,
+        float,
+        "_HashableWrapper",
+        "_HashableWrapper",
+        int,
+        int,
+        Sequence[bool],
+        Sequence[str],
+    ],
 ]:
     """Flattens a `Density2D` into children and auxilliary data."""
     return (
@@ -234,12 +250,23 @@ def _flatten_density_2d(
             _HashableWrapper(density.fixed_void),
             density.minimum_width,
             density.minimum_spacing,
+            density.periodic,
+            density.symmetries,
         ),
     )
 
 
 def _unflatten_density_2d(
-    aux: Tuple[float, float, "_HashableWrapper", "_HashableWrapper", int, int],
+    aux: Tuple[
+        float,
+        float,
+        "_HashableWrapper",
+        "_HashableWrapper",
+        int,
+        int,
+        Sequence[bool],
+        Sequence[str],
+    ],
     children: Tuple[Array],
 ) -> Density2DArray:
     """Unflattens a flattened `Density2D`."""
@@ -251,6 +278,8 @@ def _unflatten_density_2d(
         wrapped_fixed_void,
         minimum_width,
         minimum_spacing,
+        periodic,
+        symmetries,
     ) = aux
     return Density2DArray(
         array=array,
@@ -260,6 +289,8 @@ def _unflatten_density_2d(
         fixed_void=wrapped_fixed_void.array,
         minimum_width=minimum_width,
         minimum_spacing=minimum_spacing,
+        periodic=tuple(periodic),
+        symmetries=tuple(symmetries),
     )
 
 
@@ -272,7 +303,9 @@ tree_util.register_pytree_node(
 
 def symmetrize_density(density: Density2DArray) -> Density2DArray:
     """Return a `density` with array having the specified `symmetries`."""
-    symmetrized: Density2DArray = symmetry.symmetrize(density, density.symmetries)
+    symmetrized: Density2DArray = symmetry.symmetrize(
+        density, tuple(density.symmetries)
+    )
     return symmetrized
 
 
