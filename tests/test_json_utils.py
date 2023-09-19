@@ -36,8 +36,8 @@ DENSITY_2D_ARRAYS = [
         fixed_void=jnp.ones((3, 3), dtype=bool),
         minimum_width=2,
         minimum_spacing=3,
-        periodic=[True, False],
-        symmetries=[symmetry.ROTATION_180, symmetry.REFLECTION_N_S],
+        periodic=(True, False),
+        symmetries=(symmetry.ROTATION_180, symmetry.REFLECTION_N_S),
     ),
     types.Density2DArray(
         array=onp.ones((3, 3)),
@@ -47,8 +47,8 @@ DENSITY_2D_ARRAYS = [
         fixed_void=onp.ones((3, 3), dtype=bool),
         minimum_width=2,
         minimum_spacing=3,
-        periodic=[True, True],
-        symmetries=[],
+        periodic=(True, True),
+        symmetries=(),
     ),
 ]
 
