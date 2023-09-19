@@ -153,6 +153,9 @@ class Density2DArray:
     symmetries: Sequence[str] = ()
 
     def __post_init__(self) -> None:
+        self.periodic = tuple(self.periodic)
+        self.symmetries = tuple(self.symmetries)
+
         # Attributes may be strings if they are serialized, or jax tracers
         # e.g. when computing gradients. Avoid validation in these cases.
         if not isinstance(self.array, (jnp.ndarray, onp.ndarray)):
