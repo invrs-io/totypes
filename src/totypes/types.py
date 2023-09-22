@@ -3,6 +3,7 @@
 import dataclasses
 from typing import Any, Optional, Sequence, Tuple, Union
 
+import jax
 import jax.numpy as jnp
 import numpy as onp
 from jax import tree_util
@@ -165,7 +166,6 @@ class Density2DArray:
             raise ValueError(
                 f"`array` must be at least rank-2, but got shape {self.array.shape}"
             )
-
         if (
             not isinstance(self.lower_bound, (float, int))
             or not isinstance(self.upper_bound, (float, int))
@@ -196,15 +196,18 @@ class Density2DArray:
             raise ValueError(
                 f"`fixed_void` must be bool-typed but got {self.fixed_void.dtype}."
             )
-        if (
-            self.fixed_solid is not None
-            and self.fixed_void is not None
-            and (self.fixed_solid & self.fixed_void).any()
-        ):
-            raise ValueError(
-                "Got incompatible `fixed_solid` and `fixed_void`; these must "
-                "not be `True` at the same indices."
-            )
+
+        with jax.ensure_compile_time_eval():
+            if (
+                self.fixed_solid is not None
+                and self.fixed_void is not None
+                and (self.fixed_solid & self.fixed_void).any()
+            ):
+                raise ValueError(
+                    "Got incompatible `fixed_solid` and `fixed_void`; these must "
+                    "not be `True` at the same indices."
+                )
+
         if not isinstance(self.minimum_width, int) or self.minimum_width < 1:
             raise ValueError(
                 f"`minimum_width` must be a postive int, but got {self.minimum_width}"

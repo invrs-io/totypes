@@ -5,6 +5,7 @@ import unittest
 import jax
 import jax.numpy as jnp
 import numpy as onp
+import optax
 from parameterized import parameterized
 
 from totypes import symmetry, types
@@ -176,6 +177,52 @@ class Density2DArrayTest(unittest.TestCase):
         leaves, treedef = jax.tree_util.tree_flatten(density)
         restored_density = jax.tree_util.tree_unflatten(treedef, leaves)
         onp.testing.assert_array_equal(density, restored_density)
+
+
+class OptimzizeTest(unittest.TestCase):
+    @parameterized.expand(
+        [
+            [
+                types.BoundedArray(
+                    array=jnp.ones((10, 10)),
+                    lower_bound=-1.0,
+                    upper_bound=1.0,
+                )
+            ],
+            [
+                types.Density2DArray(
+                    array=jnp.ones((10, 10)),
+                    fixed_solid=None,
+                    fixed_void=None,
+                )
+            ],
+            [
+                types.Density2DArray(
+                    array=jnp.ones((10, 10)),
+                    fixed_solid=jnp.zeros((10, 10), dtype=bool),
+                    fixed_void=None,
+                )
+            ],
+            [
+                types.Density2DArray(
+                    array=jnp.ones((10, 10)),
+                    fixed_solid=jnp.zeros((10, 10), dtype=bool),
+                    fixed_void=jnp.zeros((10, 10), dtype=bool),
+                )
+            ],
+        ]
+    )
+    def test_optax_optimize(self, params):
+        def loss_fn(params):
+            return jnp.sum(jnp.abs(params.array))
+
+        opt = optax.adam(0.1)
+        state = opt.init(params)
+
+        for _ in range(10):
+            grad = jax.grad(loss_fn)(params)
+            updates, state = opt.update(grad, state)
+            params = optax.apply_updates(params, updates)
 
 
 class ApplySymmetryTest(unittest.TestCase):
