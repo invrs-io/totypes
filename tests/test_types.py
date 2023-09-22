@@ -180,13 +180,39 @@ class Density2DArrayTest(unittest.TestCase):
 
 
 class OptimzizeTest(unittest.TestCase):
-    def test_optax_optimize_bounded_array(self):
-        params = types.BoundedArray(
-            array=jnp.ones((10, 10)),
-            lower_bound=-1.0,
-            upper_bound=1.0,
-        )
-        
+    @parameterized.expand(
+        [
+            [
+                types.BoundedArray(
+                    array=jnp.ones((10, 10)),
+                    lower_bound=-1.0,
+                    upper_bound=1.0,
+                )
+            ],
+            [
+                types.Density2DArray(
+                    array=jnp.ones((10, 10)),
+                    fixed_solid=None,
+                    fixed_void=None,
+                )
+            ],
+            [
+                types.Density2DArray(
+                    array=jnp.ones((10, 10)),
+                    fixed_solid=jnp.zeros((10, 10), dtype=bool),
+                    fixed_void=None,
+                )
+            ],
+            [
+                types.Density2DArray(
+                    array=jnp.ones((10, 10)),
+                    fixed_solid=jnp.zeros((10, 10), dtype=bool),
+                    fixed_void=jnp.zeros((10, 10), dtype=bool),
+                )
+            ],
+        ]
+    )
+    def test_optax_optimize(self, params):
         def loss_fn(params):
             return jnp.sum(jnp.abs(params.array))
 
@@ -197,25 +223,6 @@ class OptimzizeTest(unittest.TestCase):
             grad = jax.grad(loss_fn)(params)
             updates, state = opt.update(grad, state)
             params = optax.apply_updates(params, updates)
-
-    def test_optax_optimize_density_2d(self):
-        params = types.Density2DArray(
-            array=jnp.ones((10, 10)),
-            fixed_solid=jnp.zeros((10, 10), dtype=bool),
-            fixed_void=jnp.zeros((10, 10), dtype=bool),
-        )
-        
-        def loss_fn(params):
-            return jnp.sum(jnp.abs(params.array))
-
-        opt = optax.adam(0.1)
-        state = opt.init(params)
-
-        for _ in range(10):
-            grad = jax.grad(loss_fn)(params)
-            updates, state = opt.update(grad, state)
-            params = optax.apply_updates(params, updates)
-
 
 
 class ApplySymmetryTest(unittest.TestCase):

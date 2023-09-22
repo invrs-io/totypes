@@ -196,7 +196,7 @@ class Density2DArray:
             raise ValueError(
                 f"`fixed_void` must be bool-typed but got {self.fixed_void.dtype}."
             )
-        
+
         with jax.ensure_compile_time_eval():
             if (
                 self.fixed_solid is not None
