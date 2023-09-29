@@ -352,11 +352,12 @@ class _HashableWrapper:
         if is_array_both not in ((True, True), (False, False)):
             return False
         if all(is_array_both):
-            return bool(
-                self.array.shape == other.array.shape  # type: ignore[union-attr]
-                and self.array.dtype == other.array.dtype  # type: ignore[union-attr]
-                and (self.array == other.array).all()  # type: ignore[union-attr]
-            )
+            with jax.ensure_compile_time_eval():
+                return bool(
+                    self.array.shape == other.array.shape  # type: ignore[union-attr]
+                    and self.array.dtype == other.array.dtype  # type: ignore[union-attr]
+                    and (self.array == other.array).all()  # type: ignore[union-attr]
+                )
         return self.array == other.array
 
 
