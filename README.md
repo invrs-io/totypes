@@ -1,3 +1,5 @@
-# totypes 0.0.0
+# totypes 0.0.0 - Custom datatypes for topology optimization.
 
-Custom datatypes useful in a topology optimization context.
+## Overview
+
+## Install
