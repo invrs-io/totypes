@@ -39,6 +39,18 @@ dev = [
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.package-data]
+"invrs_gym" = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = [
+    # Allow test files to have the same name in different directories.
+    "--import-mode=importlib",
+]
+pythonpath = [
+  "src",
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py310']
