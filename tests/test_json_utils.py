@@ -1,4 +1,7 @@
-"""Defines tests for the `totypes.json_utils` module."""
+"""Defines tests for the `totypes.json_utils` module.
+
+Copyright (c) 2023 Martin F. Schubert
+"""
 
 import dataclasses
 import unittest

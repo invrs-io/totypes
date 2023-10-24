@@ -1,4 +1,7 @@
-"""Custom datatypes useful in an topology optimization setting."""
+"""Custom datatypes useful in an topology optimization setting.
+
+Copyright (c) 2023 Martin F. Schubert
+"""
 
 import dataclasses
 from typing import Any, Optional, Sequence, Tuple, Union

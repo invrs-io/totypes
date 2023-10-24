@@ -1,4 +1,7 @@
-"""Defines tests for the `totypes.types` module."""
+"""Defines tests for the `totypes.types` module.
+
+Copyright (c) 2023 Martin F. Schubert
+"""
 
 import unittest
 

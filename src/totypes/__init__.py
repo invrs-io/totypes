@@ -1,7 +1,10 @@
-"""totypes - Custom datatypes useful in a topology optimization context."""
+"""totypes - Custom datatypes useful in a topology optimization context.
+
+Copyright (c) 2023 Martin F. Schubert
+"""
 
 __version__ = "0.0.0"
-__author__ = "Martin Schubert <mfschubert@gmail.com>"
+__author__ = "Martin F. Schubert <mfschubert@gmail.com>"
 
 __all__ = ["json_utils", "symmetry", "types"]
 

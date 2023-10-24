@@ -1,4 +1,7 @@
-"""Defines symmetries for arrays."""
+"""Defines symmetries for arrays.
+
+Copyright (c) 2023 Martin F. Schubert
+"""
 
 from typing import Any, Tuple
 
