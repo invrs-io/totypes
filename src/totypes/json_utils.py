@@ -1,4 +1,7 @@
-"""Utility functions related to json packing and unpacking."""
+"""Utility functions related to json packing and unpacking.
+
+Copyright (c) 2023 Martin F. Schubert
+"""
 
 import dataclasses
 import functools
