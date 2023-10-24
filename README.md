@@ -12,4 +12,6 @@ Several related utilities are also provided. The `json_utils` module provides fu
 
 ## Install
 
-TODO
+```
+pip install totypes
+```
