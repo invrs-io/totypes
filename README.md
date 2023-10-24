@@ -1,4 +1,4 @@
-# totypes 0.0.0 - Custom types for topology optimization
+# totypes v0.1.0 - Custom types for topology optimization
 
 ## Overview
 
