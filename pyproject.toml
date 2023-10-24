@@ -9,10 +9,10 @@ requires-python = ">=3.7"
 license = {file = "LICENSE"}
 
 authors = [
-    {name = "Martin Schubert", email = "mfschubert@gmail.com"},
+    {name = "Martin F. Schubert", email = "mfschubert@gmail.com"},
 ]
 maintainers = [
-    {name = "Martin Schubert", email = "mfschubert@gmail.com"},
+    {name = "Martin F. Schubert", email = "mfschubert@gmail.com"},
 ]
 
 dependencies = [
