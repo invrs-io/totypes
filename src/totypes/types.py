@@ -11,7 +11,7 @@ import jax.numpy as jnp
 import numpy as onp
 from jax import tree_util
 
-from totypes import symmetry
+from totypes import json_utils, symmetry
 
 Array = Union[jnp.ndarray, onp.ndarray]
 ArrayOrScalar = Union[Array, float, int]
@@ -115,6 +115,8 @@ tree_util.register_pytree_node(
     flatten_func=_flatten_bounded_array,
     unflatten_func=_unflatten_bounded_array,
 )
+
+json_utils.register_custom_type(BoundedArray)
 
 
 # -----------------------------------------------------------------------------
@@ -317,6 +319,9 @@ tree_util.register_pytree_node(
     flatten_func=_flatten_density_2d,
     unflatten_func=_unflatten_density_2d,
 )
+
+
+json_utils.register_custom_type(Density2DArray)
 
 
 def symmetrize_density(density: Density2DArray) -> Density2DArray:

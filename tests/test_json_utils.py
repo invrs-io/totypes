@@ -84,7 +84,7 @@ class SerializeDeserializeTest(unittest.TestCase):
         for leaf, expected_leaf in zip(leaves, expected_leaves):
             onp.testing.assert_array_equal(leaf, expected_leaf)
 
-    def test_serialize_with_custom_namedtuple(self):
+    def test_serialize_with_extra_custom_namedtuple(self):
         class CustomObject(NamedTuple):
             x: onp.ndarray
             y: int
@@ -103,7 +103,7 @@ class SerializeDeserializeTest(unittest.TestCase):
         self.assertEqual(restored.y, obj.y)
         self.assertEqual(restored.z, obj.z)
 
-    def test_serialize_with_custom_dataclass(self):
+    def test_serialize_with_extra_custom_dataclass(self):
         @dataclasses.dataclass
         class CustomObject:
             x: onp.ndarray
@@ -123,8 +123,46 @@ class SerializeDeserializeTest(unittest.TestCase):
         self.assertEqual(restored.y, obj.y)
         self.assertEqual(restored.z, obj.z)
 
+    def test_serialize_with_registered_custom_namedtuple(self):
+        class CustomObject(NamedTuple):
+            x: onp.ndarray
+            y: int
+            z: str
+
+        json_utils.register_custom_type(CustomObject)
+
+        obj = CustomObject(onp.arange(5), 22, "abc")
+
+        serialized = json_utils.json_from_pytree(obj)
+        restored = json_utils.pytree_from_json(serialized)
+
+        self.assertIsInstance(restored, CustomObject)
+        onp.testing.assert_array_equal(restored.x, obj.x)
+        self.assertEqual(restored.y, obj.y)
+        self.assertEqual(restored.z, obj.z)
+
+    def test_serialize_with_registered_custom_dataclass(self):
+        @dataclasses.dataclass
+        class CustomObject:
+            x: onp.ndarray
+            y: int
+            z: str
+
+        json_utils.register_custom_type(CustomObject)
+
+        obj = CustomObject(onp.arange(5), 22, "abc")
+
+        serialized = json_utils.json_from_pytree(obj)
+        restored = json_utils.pytree_from_json(serialized)
+
+        self.assertIsInstance(restored, CustomObject)
+        onp.testing.assert_array_equal(restored.x, obj.x)
+        self.assertEqual(restored.y, obj.y)
+        self.assertEqual(restored.z, obj.z)
+
 
 class TestAllCustomTypesHaveAPrefix(unittest.TestCase):
     def test_all_custom_types_have_a_prefix(self):
-        custom_types = [t for t, _ in json_utils.CUSTOM_TYPES_AND_PREFIXES]
-        self.assertEqual(set(custom_types), set(types.CUSTOM_TYPES))
+        custom_types = json_utils._CUSTOM_TYPE_REGISTRY.values()
+        for t in types.CUSTOM_TYPES:
+            self.assertTrue(t in custom_types)
