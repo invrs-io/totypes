@@ -43,7 +43,7 @@ def register_custom_type(custom_type: Any) -> None:
 
 def _prefix_for_custom_type(custom_type: Any) -> str:
     """Return the prefix for a custom type."""
-    type_str = str(custom_type).split(".")[-1]
+    type_str = str(custom_type)
     type_hash = hash(type_str)
     type_hash_str = f"{'p' if type_hash > 0 else 'n'}{abs(type_hash)}"
     return f"\x93TYPES.{type_hash_str}.{type_str}."
