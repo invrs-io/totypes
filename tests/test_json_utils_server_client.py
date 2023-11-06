@@ -61,7 +61,7 @@ class TestServerClient(unittest.TestCase):
                     functools.partial(get_prefixes, register_type=False),
                 ]
             ]
-            server_prefixes, client_prefixes = [task.result() for task in running_tasks]
+            server_prefixes, client_prefixes = (task.result() for task in running_tasks)
 
         self.assertFalse(len(server_prefixes) == len(client_prefixes))
 
