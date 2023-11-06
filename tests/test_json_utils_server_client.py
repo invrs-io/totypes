@@ -3,7 +3,6 @@
 Copyright (c) 2023 The INVRS-IO authors.
 """
 
-import dataclasses
 import functools
 import unittest
 from concurrent import futures
