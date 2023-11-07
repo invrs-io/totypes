@@ -3,9 +3,8 @@
 Copyright (c) 2023 The INVRS-IO authors.
 """
 
+import base64
 import dataclasses
-import functools
-import io
 import json
 from typing import Any, Dict, Sequence, Tuple, Union
 
@@ -15,9 +14,10 @@ from jax import tree_util
 
 PyTree = Any
 
-_NUMPY_ASCII_FORMAT = "latin-1"
-_PREFIX_NUMPY = "\x93NUMPY"
+
 _CUSTOM_TYPE_REGISTRY: Dict[str, Any] = {}
+
+_PREFIX_ARRAY = "\x93TYPES.ARRAY"
 
 
 def register_custom_type(custom_type: Any) -> None:
@@ -53,7 +53,7 @@ def _validate_prefix(test_prefix: str, existing_prefixes: Sequence[str]) -> None
     """Validate that `test_prefix` does not conflict with `existing_prefixes."""
     for p in existing_prefixes:
         if (
-            p.startswith(_PREFIX_NUMPY)
+            p.startswith(_PREFIX_ARRAY)
             or p.startswith(test_prefix)
             or test_prefix.startswith(p)
         ):
@@ -107,52 +107,10 @@ def json_from_pytree(
             + extra_custom_types_and_prefixes
         )
     )
-    custom_types, prefixes = zip(*custom_types_and_prefixes)
-    _validate_prefixes(prefixes)
-    pytree_with_serialized = tree_util.tree_map(
-        f=functools.partial(
-            _maybe_serialize,
-            custom_types_and_prefixes=custom_types_and_prefixes,
-        ),
-        tree=pytree,
-        is_leaf=lambda x: isinstance(x, custom_types),
+    pytree_with_serialized = _prepare_for_json_serialization(
+        pytree, custom_types_and_prefixes
     )
     return json.dumps(pytree_with_serialized)
-
-
-def _maybe_serialize(
-    obj: Any,
-    custom_types_and_prefixes: Tuple[Tuple[Any, str], ...],
-) -> Any:
-    """Serializes `obj` if it is a recognized custom type."""
-    if isinstance(obj, (onp.ndarray, jnp.ndarray)):
-        return _serialize_array(obj)
-    for custom_type, prefix in custom_types_and_prefixes:
-        if isinstance(obj, custom_type):
-            return (
-                f"{prefix}{json_from_pytree(_asdict(obj), custom_types_and_prefixes)}"
-            )
-    return obj
-
-
-def _asdict(x: Any) -> Dict[str, Any]:
-    """Converts dataclasses or namedtuples to dictionaries."""
-    if dataclasses.is_dataclass(x):
-        return dataclasses.asdict(x)
-    try:
-        return x._asdict()  # type: ignore[no-any-return]
-    except AttributeError as exc:
-        raise ValueError(
-            f"`x` must be a dataclass or a namedtuple, but got {type(x)}"
-        ) from exc
-
-
-def _serialize_array(obj: Union[onp.ndarray, jnp.ndarray]) -> str:
-    """Serializes a numpy array to a string."""
-    obj = onp.asarray(obj)
-    memfile = io.BytesIO()
-    onp.save(memfile, obj)
-    return memfile.getvalue().decode(_NUMPY_ASCII_FORMAT)
 
 
 def pytree_from_json(
@@ -184,39 +142,152 @@ def pytree_from_json(
             + extra_custom_types_and_prefixes
         )
     )
+    converted = json.loads(serialized)
+    return _restore_pytree(converted, custom_types_and_prefixes)
+
+
+# -----------------------------------------------------------------------------
+# Functions for converting pytrees to prepare for json-serialization.
+# -----------------------------------------------------------------------------
+
+
+def _prepare_for_json_serialization(
+    pytree: Any,
+    custom_types_and_prefixes: Sequence[Tuple[Any, str]],
+) -> Any:
+    """Convert `pytree` so that it can be json-serialized.
+
+    Args:
+        pytree: The pytree to be prepared for serialization.
+        custom_types_and_prefixes: Custom types and corresponding prefixes. Any
+            instances of a custom type in `pytree` are converted to dictionaries.
+
+    Returns:
+        The converted pytree, suitable for json-serialization.
+    """
+    # Dictionary with keys that are custom types, and values that are prefixes.
     _, prefixes = zip(*custom_types_and_prefixes)
     _validate_prefixes(prefixes)
-    pytree_with_serialized_arrays = json.loads(serialized)
+    custom_type_dict = _custom_type_dict(custom_types_and_prefixes)
+    custom_types = tuple(custom_type_dict.keys())
+
+    def convert_fn(obj: Any) -> Any:
+        if isinstance(obj, (onp.ndarray, jnp.ndarray)):
+            return _convert_array(obj)
+        if isinstance(obj, custom_types):
+            return (
+                custom_type_dict[type(obj)],  # Value is the prefix.
+                _prepare_for_json_serialization(
+                    _asdict(obj), custom_types_and_prefixes
+                ),
+            )
+        return obj
+
     return tree_util.tree_map(
-        functools.partial(
-            _maybe_deserialize,
-            custom_types_and_prefixes=custom_types_and_prefixes,
-        ),
-        pytree_with_serialized_arrays,
+        convert_fn, pytree, is_leaf=lambda x: isinstance(x, custom_types)
     )
 
 
-def _maybe_deserialize(
-    maybe_serialized: Any,
-    custom_types_and_prefixes: Tuple[Tuple[Any, str], ...],
-) -> Any:
-    """Deserializes data if it is in a recognized format."""
-    if not isinstance(maybe_serialized, str):
-        return maybe_serialized
-
-    if maybe_serialized.startswith(_PREFIX_NUMPY):
-        return _deserialize_array(maybe_serialized)
+def _custom_type_dict(
+    custom_types_and_prefixes: Sequence[Tuple[Any, str]]
+) -> Dict[Any, str]:
+    """Dictionary that maps custom types to their prefixes."""
+    custom_type_dict = {}
     for custom_type, prefix in custom_types_and_prefixes:
-        if maybe_serialized.startswith(prefix):
-            data = pytree_from_json(maybe_serialized[len(prefix) :])
-            return custom_type(**data)
-
-    return maybe_serialized
+        custom_type_dict[custom_type] = prefix
+    return custom_type_dict
 
 
-def _deserialize_array(serialized_array: Any) -> Any:
-    """Deserializes a numpy array from a string."""
-    memfile = io.BytesIO()
-    memfile.write(serialized_array.encode(_NUMPY_ASCII_FORMAT))
-    memfile.seek(0)
-    return onp.load(memfile)
+def _convert_array(arr: Union[onp.ndarray, jnp.ndarray]) -> Tuple[str, Dict[str, Any]]:
+    """Converts a numpy or jax array so that it can be json-serialized."""
+    assert isinstance(arr, (onp.ndarray, jnp.ndarray))
+    return (
+        _PREFIX_ARRAY,
+        {
+            # Keys match the variable names of `_restore_array`.
+            "shape": arr.shape,
+            "dtype": str(arr.dtype),
+            "bytes": base64.b64encode(arr.tobytes()).decode("ASCII"),
+        },
+    )
+
+
+def _asdict(x: Any) -> Dict[str, Any]:
+    """Converts dataclasses or namedtuples to dictionaries."""
+    if dataclasses.is_dataclass(x):
+        return dataclasses.asdict(x)
+    try:
+        return x._asdict()  # type: ignore[no-any-return]
+    except AttributeError as exc:
+        raise ValueError(
+            f"`x` must be a dataclass or a namedtuple, but got {type(x)}"
+        ) from exc
+
+
+# -----------------------------------------------------------------------------
+# Functions for undoing the conversion required for json-serialization.
+# -----------------------------------------------------------------------------
+
+
+def _restore_pytree(
+    pytree: Any,
+    custom_types_and_prefixes: Sequence[Tuple[Any, str]],
+) -> Any:
+    """Restores a pytree array, undoing the conversion needed for json-serialization.
+
+    This function effectively undoes a `_prepare_for_json_serialization` operation.
+
+    Args:
+        pytree: The pytree to be restored.
+        custom_types_and_prefixes: Custom types and corresponding prefixes. Any
+            instances of a custom type in `pytree` are restored.
+
+    Returns:
+        The converted pytree, suitable for json-serialization."""
+    _, prefixes = zip(*custom_types_and_prefixes)
+    _validate_prefixes(prefixes)
+    prefix_dict = _prefix_dict(custom_types_and_prefixes)
+    prefixes = tuple(prefix_dict.keys())
+
+    def restore_fn(obj: Any) -> Any:
+        if _is_array_leaf(obj):
+            _, data = obj
+            return _restore_array(**data)
+        if _is_custom_leaf(obj, prefixes):
+            prefix, data = obj
+            return prefix_dict[prefix](
+                **_restore_pytree(data, custom_types_and_prefixes)
+            )
+        return obj
+
+    return tree_util.tree_map(
+        restore_fn,
+        pytree,
+        is_leaf=lambda x: _is_array_leaf(x) or _is_custom_leaf(x, prefixes),
+    )
+
+
+def _prefix_dict(
+    custom_types_and_prefixes: Sequence[Tuple[Any, str]]
+) -> Dict[str, Any]:
+    """Dictionary that maps prefixes to the corresponding custom type."""
+    prefix_dict = {}
+    for custom_type, prefix in custom_types_and_prefixes:
+        prefix_dict[prefix] = custom_type
+    return prefix_dict
+
+
+def _is_array_leaf(obj: Any) -> bool:
+    """Return `True` if `obj` is a converted array leaf."""
+    return isinstance(obj, (tuple, list)) and len(obj) == 2 and obj[0] == _PREFIX_ARRAY
+
+
+def _is_custom_leaf(obj: Any, prefixes: Sequence[str]) -> bool:
+    """Return `True` if `obj` is a converted custom leaf."""
+    return isinstance(obj, (tuple, list)) and len(obj) == 2 and obj[0] in prefixes
+
+
+def _restore_array(shape: Tuple[int, ...], dtype: str, bytes: str) -> onp.ndarray:
+    """Restores an array from its serialized attributes."""
+    array = onp.frombuffer(base64.b64decode(bytes), dtype=dtype)
+    return array.reshape(shape)
