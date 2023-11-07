@@ -4,6 +4,9 @@ Copyright (c) 2023 The INVRS-IO authors.
 """
 
 import dataclasses
+import os
+import sys
+import tempfile
 import unittest
 from typing import NamedTuple
 
@@ -68,6 +71,63 @@ class SerializeDeserializeTest(unittest.TestCase):
         self.assertEqual(pytreedef, expected_pytreedef)
         onp.testing.assert_array_equal(leaf, expected_leaf)
 
+    def test_serialized_array_size_is_expected(self):
+        # Tests the size of an array serialized with `json_from_pytree`.
+        array = onp.ones((345, 678), dtype=onp.float64)
+        expected_size = 8 * onp.prod(array.shape)
+
+        serialized = json_utils.json_from_pytree(array)
+        serialized_size = sys.getsizeof(serialized)
+        serialized_ratio = serialized_size / expected_size
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            fname = tempdir + "/test.json"
+            with open(fname, "w") as f:
+                f.write(serialized)
+            disk_size = os.path.getsize(fname)
+        disk_ratio = disk_size / expected_size
+
+        self.assertLess(serialized_ratio, 1.4)
+        self.assertLess(disk_ratio, 1.4)
+
+    def test_serialized_pytree_size_is_expected(self):
+        # Tests the size of a serialized pytree.
+        pytree = {
+            "array": onp.ones((500, 500)),
+            "density": types.Density2DArray(
+                array=onp.ones((300, 300)),
+                lower_bound=0,
+                upper_bound=2,
+                fixed_solid=None,
+                fixed_void=None,
+                minimum_width=2,
+                minimum_spacing=3,
+                periodic=(True, True),
+                symmetries=(),
+            ),
+            "bounded_array": types.BoundedArray(
+                array=onp.ones((200, 200)), lower_bound=None, upper_bound=2
+            ),
+        }
+
+        pytree_size = onp.sum(
+            [sys.getsizeof(leaf) for leaf in jax.tree_util.tree_leaves(pytree)]
+        )
+
+        serialized = json_utils.json_from_pytree(pytree)
+        serialized_size = sys.getsizeof(serialized)
+        serialized_ratio = serialized_size / pytree_size
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            fname = tempdir + "/test.json"
+            with open(fname, "w") as f:
+                f.write(serialized)
+            disk_size = os.path.getsize(fname)
+        disk_ratio = disk_size / pytree_size
+
+        self.assertLess(serialized_ratio, 1.4)
+        self.assertLess(disk_ratio, 1.4)
+
     def test_serialize_deserialize_pytree(self):
         tree = {
             "arrays": ARRAYS,
@@ -76,6 +136,27 @@ class SerializeDeserializeTest(unittest.TestCase):
         }
         serialized = json_utils.json_from_pytree(tree)
         restored = json_utils.pytree_from_json(serialized)
+
+        leaves, pytreedef = jax.tree_util.tree_flatten(restored)
+        expected_leaves, expected_pytreedef = jax.tree_util.tree_flatten(restored)
+
+        self.assertEqual(pytreedef, expected_pytreedef)
+        for leaf, expected_leaf in zip(leaves, expected_leaves):
+            onp.testing.assert_array_equal(leaf, expected_leaf)
+
+    def test_serialize_deserialize_pytree_from_disk(self):
+        tree = {
+            "arrays": ARRAYS,
+            "bounded_arrays": BOUNDED_ARRAYS,
+            "density_2d_arrays": DENSITY_2D_ARRAYS,
+        }
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            fname = tempdir + "/test.json"
+            with open(fname, "w") as f:
+                f.write(json_utils.json_from_pytree(tree))
+            with open(fname) as f:
+                restored = json_utils.pytree_from_json(f.read())
 
         leaves, pytreedef = jax.tree_util.tree_flatten(restored)
         expected_leaves, expected_pytreedef = jax.tree_util.tree_flatten(restored)
