@@ -156,7 +156,7 @@ def _prepare_for_json_serialization(
     custom_types_and_prefixes: Sequence[Tuple[Any, str]],
 ) -> Any:
     """Convert `pytree` so that it can be json-serialized.
-    
+
     Args:
         pytree: The pytree to be prepared for serialization.
         custom_types_and_prefixes: Custom types and corresponding prefixes. Any
@@ -236,7 +236,7 @@ def _restore_pytree(
     """Restores a pytree array, undoing the conversion needed for json-serialization.
 
     This function effectively undoes a `_prepare_for_json_serialization` operation.
-    
+
     Args:
         pytree: The pytree to be restored.
         custom_types_and_prefixes: Custom types and corresponding prefixes. Any
