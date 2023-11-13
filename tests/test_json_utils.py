@@ -247,3 +247,40 @@ class TestAllCustomTypesHaveAPrefix(unittest.TestCase):
         custom_types = json_utils._CUSTOM_TYPE_REGISTRY.values()
         for t in types.CUSTOM_TYPES:
             self.assertTrue(t in custom_types)
+
+
+class RegisterCustomTypeValidation(unittest.TestCase):
+    def test_is_not_dataclass_or_namedtuple(self):
+        class MyClass123:
+            pass
+
+        with self.assertRaisesRegex(
+            ValueError, "Only dataclasses and namedtuples are supported"
+        ):
+            json_utils.register_custom_type(MyClass123)
+
+    def test_is_not_type(self):
+        @dataclasses.dataclass
+        class MyClass123:
+            pass
+
+        json_utils.register_custom_type(MyClass123)
+        self.assertTrue(
+            any(
+                ["MyClass123" in key for key in json_utils._CUSTOM_TYPE_REGISTRY.keys()]
+            )
+        )
+        print(type(MyClass123()))
+        with self.assertRaisesRegex(
+            ValueError, "`custom_type` must be a type, but got"
+        ):
+            json_utils.register_custom_type(MyClass123())
+
+    def test_duplicate_registration(self):
+        @dataclasses.dataclass
+        class MyClass123:
+            pass
+
+        json_utils.register_custom_type(MyClass123)
+        with self.assertRaisesRegex(ValueError, "Duplicate custom type registration"):
+            json_utils.register_custom_type(MyClass123)

@@ -30,6 +30,8 @@ def register_custom_type(custom_type: Any) -> None:
     Args:
         custom_type: The custom type to be serialized.
     """
+    if type(custom_type) is not type:
+        raise ValueError(f"`custom_type` must be a type, but got {type(custom_type)}.")
     if not (dataclasses.is_dataclass(custom_type) or _is_namedtuple(custom_type)):
         raise ValueError(
             f"Only dataclasses and namedtuples are supported, but got {custom_type}."
@@ -43,10 +45,7 @@ def register_custom_type(custom_type: Any) -> None:
 
 def _prefix_for_custom_type(custom_type: Any) -> str:
     """Return the prefix for a custom type."""
-    type_str = str(custom_type)
-    type_hash = hash(type_str)
-    type_hash_str = f"{'p' if type_hash > 0 else 'n'}{abs(type_hash)}"
-    return f"\x93TYPES.{type_hash_str}.{type_str}."
+    return f"\x93TOTYPES.REGISTERED_CUSTOM_TYPE.{str(custom_type)}"
 
 
 def _validate_prefix(test_prefix: str, existing_prefixes: Sequence[str]) -> None:
