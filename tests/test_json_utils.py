@@ -259,7 +259,6 @@ class SerializeDeserializeTest(unittest.TestCase):
         )
 
         serialized = json_utils.json_from_pytree(obj)
-        print(serialized)
         restored = json_utils.pytree_from_json(serialized)
         self.assertIsInstance(restored, CustomObject)
         self.assertIsInstance(restored.x, types.Density2DArray)
@@ -314,7 +313,6 @@ class RegisterCustomTypeValidation(unittest.TestCase):
                 ["MyClass123" in key for key in json_utils._CUSTOM_TYPE_REGISTRY.keys()]
             )
         )
-        print(type(MyClass123()))
         with self.assertRaisesRegex(
             ValueError, "`custom_type` must be a type, but got"
         ):
