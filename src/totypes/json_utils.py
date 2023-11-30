@@ -214,9 +214,9 @@ def _convert_array(arr: Union[onp.ndarray, jnp.ndarray]) -> Tuple[str, Dict[str,
 def _asdict(x: Any) -> Dict[str, Any]:
     """Converts dataclasses or namedtuples to dictionaries."""
     if dataclasses.is_dataclass(x):
-        return dict(
-            [(field.name, getattr(x, field.name)) for field in dataclasses.fields(x)]
-        )
+        return {
+            field.name: getattr(x, field.name) for field in dataclasses.fields(x)
+        }
     try:
         return x._asdict()  # type: ignore[no-any-return]
     except AttributeError as exc:
