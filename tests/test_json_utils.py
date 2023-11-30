@@ -222,6 +222,50 @@ class SerializeDeserializeTest(unittest.TestCase):
         self.assertEqual(restored.y, obj.y)
         self.assertEqual(restored.z, obj.z)
 
+    def test_serialize_with_custom_namedtuple_having_internal_custom_type(self):
+        class CustomObject(NamedTuple):
+            x: types.Density2DArray
+            y: types.BoundedArray
+            z: str
+
+        json_utils.register_custom_type(CustomObject)
+
+        obj = CustomObject(
+            x=types.Density2DArray(array=onp.zeros((5, 5))),
+            y=types.BoundedArray(onp.ones((3,)), 0, 2),
+            z="test",
+        )
+
+        serialized = json_utils.json_from_pytree(obj)
+        restored = json_utils.pytree_from_json(serialized)
+        self.assertIsInstance(restored, CustomObject)
+        self.assertIsInstance(restored.x, types.Density2DArray)
+        self.assertIsInstance(restored.y, types.BoundedArray)
+        self.assertIsInstance(restored.z, str)
+
+    def test_serialize_with_custom_dataclass_having_internal_custom_type(self):
+        @dataclasses.dataclass
+        class CustomObject:
+            x: types.Density2DArray
+            y: types.BoundedArray
+            z: str
+
+        json_utils.register_custom_type(CustomObject)
+
+        obj = CustomObject(
+            x=types.Density2DArray(array=onp.zeros((5, 5))),
+            y=types.BoundedArray(onp.ones((3,)), 0, 2),
+            z="test",
+        )
+
+        serialized = json_utils.json_from_pytree(obj)
+        print(serialized)
+        restored = json_utils.pytree_from_json(serialized)
+        self.assertIsInstance(restored, CustomObject)
+        self.assertIsInstance(restored.x, types.Density2DArray)
+        self.assertIsInstance(restored.y, types.BoundedArray)
+        self.assertIsInstance(restored.z, str)
+
     def test_serialize_with_registered_custom_dataclass(self):
         @dataclasses.dataclass
         class CustomObject:
