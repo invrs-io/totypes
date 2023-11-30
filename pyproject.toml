@@ -1,7 +1,7 @@
 [project]
 
 name = "totypes"
-version = "v0.4.0"
+version = "v0.4.1"
 description = "Custom datatypes useful in a topology optimization context"
 keywords = ["topology", "optimization", "jax", "inverse design"]
 readme = "README.md"
