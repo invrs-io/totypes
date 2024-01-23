@@ -23,7 +23,7 @@ def partition(
     is_leaf: Callable[[Any], bool] = _is_custom_type_or_none,
 ) -> Tuple[PyTree, ...]:
     """Partitions a pytree based on `select_fn`.
-    
+
     The `select_fn` is called on each leaf, and if `True` the leaf is included in the
     first return pytree; otherwise, it is included in the second. Leaves not included
     in a tree are replaced with `None` placeholders.
