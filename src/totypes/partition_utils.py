@@ -22,7 +22,22 @@ def partition(
     select_fn: Callable[[Any], bool],
     is_leaf: Callable[[Any], bool] = _is_custom_type_or_none,
 ) -> Tuple[PyTree, ...]:
-    """"""
+    """Partitions a pytree based on `select_fn`.
+    
+    The `select_fn` is called on each leaf, and if `True` the leaf is included in the
+    first return pytree; otherwise, it is included in the second. Leaves not included
+    in a tree are replaced with `None` placeholders.
+
+    Args:
+        tree: The tree to be partitioned.
+        select_fn: The function called on each leaf.
+        is_leaf: Function called at each step of the flattening which specifies whether
+            the structure is to be traversed. By default, custom datatypes defined in
+            the `types` module and `None` are included.
+
+    Returns:
+        Two pytrees resulting from the partition operation.
+    """
     selected = tree_util.tree_map(
         lambda x: x if select_fn(x) else None, tree, is_leaf=is_leaf
     )
