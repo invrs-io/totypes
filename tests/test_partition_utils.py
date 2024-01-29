@@ -7,8 +7,8 @@ import itertools
 import unittest
 
 import jax
-from jax import tree_util
 import numpy as onp
+from jax import tree_util
 from parameterized import parameterized
 
 from totypes import partition_utils, types
