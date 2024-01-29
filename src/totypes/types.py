@@ -182,12 +182,22 @@ class Density2DArray:
                 f"{self.lower_bound} and {self.upper_bound}"
             )
 
-        if self.fixed_solid is not None and self.fixed_solid.shape != self.array.shape:
+        if self.fixed_solid is not None and (
+            jnp.ndim(self.fixed_solid) > jnp.ndim(self.array)
+            or self.fixed_solid.shape[-2:] != self.array.shape[-2:]
+            or not _shapes_compatible(
+                jnp.shape(self.array), jnp.shape(self.fixed_solid)
+            )
+        ):
             raise ValueError(
                 f"`fixed_solid` must have shape matching `array`, but got shape "
                 f"{self.fixed_solid.shape} when `array` has shape {self.array.shape}."
             )
-        if self.fixed_void is not None and self.fixed_void.shape != self.array.shape:
+        if self.fixed_void is not None and (
+            jnp.ndim(self.fixed_void) > jnp.ndim(self.array)
+            or self.fixed_void.shape[-2:] != self.array.shape[-2:]
+            or not _shapes_compatible(jnp.shape(self.array), jnp.shape(self.fixed_void))
+        ):
             raise ValueError(
                 f"`fixed_void` must have shape matching `array`, but got shape "
                 f"{self.fixed_void.shape} when `array` has shape {self.array.shape}."

@@ -9,6 +9,7 @@ import jax
 import jax.numpy as jnp
 import numpy as onp
 import optax
+from jax import tree_util
 from parameterized import parameterized
 
 from totypes import symmetry, types
@@ -180,6 +181,52 @@ class Density2DArrayTest(unittest.TestCase):
         leaves, treedef = jax.tree_util.tree_flatten(density)
         restored_density = jax.tree_util.tree_unflatten(treedef, leaves)
         onp.testing.assert_array_equal(density, restored_density)
+
+    def test_broadcast_fixed_pixels(self):
+        density = types.Density2DArray(
+            array=jnp.arange(0, 30).reshape(3, 2, 5).astype(float),
+            lower_bound=-1.0,
+            upper_bound=1.0,
+            fixed_solid=jnp.ones((2, 5), dtype=bool),
+            fixed_void=jnp.zeros((2, 5), dtype=bool),
+            minimum_width=1,
+            minimum_spacing=2,
+        )
+        self.assertTrue(
+            types._shapes_compatible(density.array.shape, density.fixed_solid.shape)
+        )
+
+    def test_jacobian(self):
+        density = types.Density2DArray(
+            array=jnp.arange(0, 10).reshape(2, 5).astype(float),
+            lower_bound=-1.0,
+            upper_bound=1.0,
+            fixed_solid=None,
+            fixed_void=None,
+            minimum_width=1,
+            minimum_spacing=2,
+        )
+
+        jac = jax.jacrev(lambda x: x)(density)
+        (jac,) = tree_util.tree_leaves(jac)
+        expected_jac = jnp.diag(jnp.ones(10)).reshape((2, 5, 2, 5))
+        onp.testing.assert_array_equal(jac, expected_jac)
+
+    def test_jacobian_with_fixed_pixels(self):
+        density = types.Density2DArray(
+            array=jnp.arange(0, 10).reshape(2, 5).astype(float),
+            lower_bound=-1.0,
+            upper_bound=1.0,
+            fixed_solid=(jnp.arange(0, 10).reshape(2, 5) < 3),
+            fixed_void=(jnp.arange(0, 10).reshape(2, 5) > 7),
+            minimum_width=1,
+            minimum_spacing=2,
+        )
+
+        jac = jax.jacrev(lambda x: x)(density)
+        (jac,) = tree_util.tree_leaves(jac)
+        expected_jac = jnp.diag(jnp.ones(10)).reshape((2, 5, 2, 5))
+        onp.testing.assert_array_equal(jac, expected_jac)
 
 
 class OptimzizeTest(unittest.TestCase):
