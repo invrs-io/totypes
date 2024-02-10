@@ -20,6 +20,7 @@ from totypes import json_utils, symmetry, types
 ARRAYS = [
     1,
     2,
+    1 + 1j,
     jnp.ones((2, 3)),
     onp.ones((2, 3)),
 ]

@@ -13,11 +13,13 @@ import numpy as onp
 from jax import tree_util
 
 PyTree = Any
+NDArray = onp.ndarray[Any, Any]
 
 
 _CUSTOM_TYPE_REGISTRY: Dict[str, Any] = {}
 
 _PREFIX_ARRAY = "\x93TYPES.ARRAY"
+_PREFIX_COMPLEX = "\x93TYPES.COMPLEX"
 
 
 def register_custom_type(custom_type: Any) -> None:
@@ -80,6 +82,7 @@ def _is_namedtuple(custom_type: Any) -> bool:
 def json_from_pytree(
     pytree: PyTree,
     extra_custom_types_and_prefixes: Tuple[Tuple[Any, str], ...] = (),
+    **dumps_kwargs: Any,
 ) -> str:
     """Serializes a pytree containing arrays into a json string.
 
@@ -96,6 +99,7 @@ def json_from_pytree(
         extra_custom_types_and_prefixes: The additional custom types and prefixes.
             Note that any manually-specified custom types may override registered
             custom types.
+        **dumps_kwargs: Keyword arguments passed to `json.dumps`.
 
     Returns:
         The serialized pytree.
@@ -109,7 +113,7 @@ def json_from_pytree(
     pytree_with_serialized = _prepare_for_json_serialization(
         pytree, custom_types_and_prefixes
     )
-    return json.dumps(pytree_with_serialized)
+    return json.dumps(pytree_with_serialized, **dumps_kwargs)
 
 
 def pytree_from_json(
@@ -173,6 +177,8 @@ def _prepare_for_json_serialization(
     def convert_fn(obj: Any) -> Any:
         if isinstance(obj, (onp.ndarray, jnp.ndarray)):
             return _convert_array(obj)
+        if isinstance(obj, (complex)):
+            return _convert_complex(obj)
         if isinstance(obj, custom_types):
             return (
                 custom_type_dict[type(obj)],  # Value is the prefix.
@@ -197,18 +203,25 @@ def _custom_type_dict(
     return custom_type_dict
 
 
-def _convert_array(arr: Union[onp.ndarray, jnp.ndarray]) -> Tuple[str, Dict[str, Any]]:
+def _convert_array(arr: Union[NDArray, jnp.ndarray]) -> Tuple[str, Dict[str, Any]]:
     """Converts a numpy or jax array so that it can be json-serialized."""
     assert isinstance(arr, (onp.ndarray, jnp.ndarray))
     return (
         _PREFIX_ARRAY,
         {
-            # Keys match the variable names of `_restore_array`.
+            # Keys match the argument names of `_restore_array`.
             "shape": arr.shape,
             "dtype": str(arr.dtype),
             "bytes": base64.b64encode(arr.tobytes()).decode("ASCII"),
         },
     )
+
+
+def _convert_complex(val: complex) -> Tuple[str, Dict[str, float]]:
+    """Converts a complex so that it can be json serialized."""
+    assert isinstance(val, complex)
+    # Keys match the argument names of `_restore_complex`.
+    return (_PREFIX_COMPLEX, {"real": val.real, "imag": val.imag})
 
 
 def _asdict(x: Any) -> Dict[str, Any]:
@@ -252,6 +265,9 @@ def _restore_pytree(
         if _is_array_leaf(obj):
             _, data = obj
             return _restore_array(**data)
+        if _is_complex_leaf(obj):
+            _, data = obj
+            return _restore_complex(**data)
         if _is_custom_leaf(obj, prefixes):
             prefix, data = obj
             return prefix_dict[prefix](
@@ -262,7 +278,9 @@ def _restore_pytree(
     return tree_util.tree_map(
         restore_fn,
         pytree,
-        is_leaf=lambda x: _is_array_leaf(x) or _is_custom_leaf(x, prefixes),
+        is_leaf=lambda x: _is_array_leaf(x)
+        or _is_custom_leaf(x, prefixes)
+        or _is_complex_leaf(x),
     )
 
 
@@ -281,12 +299,24 @@ def _is_array_leaf(obj: Any) -> bool:
     return isinstance(obj, (tuple, list)) and len(obj) == 2 and obj[0] == _PREFIX_ARRAY
 
 
+def _is_complex_leaf(obj: Any) -> bool:
+    """Return `True` if `obj` is a converted complex leaf."""
+    return (
+        isinstance(obj, (tuple, list)) and len(obj) == 2 and obj[0] == _PREFIX_COMPLEX
+    )
+
+
 def _is_custom_leaf(obj: Any, prefixes: Sequence[str]) -> bool:
     """Return `True` if `obj` is a converted custom leaf."""
     return isinstance(obj, (tuple, list)) and len(obj) == 2 and obj[0] in prefixes
 
 
-def _restore_array(shape: Tuple[int, ...], dtype: str, bytes: str) -> onp.ndarray:
+def _restore_array(shape: Tuple[int, ...], dtype: str, bytes: str) -> NDArray:
     """Restores an array from its serialized attributes."""
     array = onp.frombuffer(base64.b64decode(bytes), dtype=dtype)
     return array.reshape(shape)
+
+
+def _restore_complex(real: float, imag: float) -> complex:
+    """Restores a complex from its serialized attributes."""
+    return real + 1j * imag
