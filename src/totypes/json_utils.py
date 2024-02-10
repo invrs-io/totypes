@@ -13,7 +13,6 @@ import numpy as onp
 from jax import tree_util
 
 PyTree = Any
-NDArray = onp.ndarray[Any, Any]
 
 
 _CUSTOM_TYPE_REGISTRY: Dict[str, Any] = {}
@@ -203,7 +202,7 @@ def _custom_type_dict(
     return custom_type_dict
 
 
-def _convert_array(arr: Union[NDArray, jnp.ndarray]) -> Tuple[str, Dict[str, Any]]:
+def _convert_array(arr: Union[onp.ndarray, jnp.ndarray]) -> Tuple[str, Dict[str, Any]]:
     """Converts a numpy or jax array so that it can be json-serialized."""
     assert isinstance(arr, (onp.ndarray, jnp.ndarray))
     return (
@@ -311,7 +310,7 @@ def _is_custom_leaf(obj: Any, prefixes: Sequence[str]) -> bool:
     return isinstance(obj, (tuple, list)) and len(obj) == 2 and obj[0] in prefixes
 
 
-def _restore_array(shape: Tuple[int, ...], dtype: str, bytes: str) -> NDArray:
+def _restore_array(shape: Tuple[int, ...], dtype: str, bytes: str) -> onp.ndarray:
     """Restores an array from its serialized attributes."""
     array = onp.frombuffer(base64.b64decode(bytes), dtype=dtype)
     return array.reshape(shape)
