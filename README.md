@@ -1,5 +1,5 @@
 # totypes - Custom types for topology optimization
-`v0.6.2`
+`v0.6.3`
 
 ## Overview
 
