@@ -66,9 +66,9 @@ class BoundedArray:
             )
 
         if self.upper_bound is not None and self.lower_bound is not None:
-            invalid_bounds = self.lower_bound >= self.upper_bound
-            is_array = isinstance(invalid_bounds, (jnp.ndarray, onp.ndarray))
             with jax.ensure_compile_time_eval():
+                invalid_bounds = self.lower_bound >= self.upper_bound
+                is_array = isinstance(invalid_bounds, (jnp.ndarray, onp.ndarray))
                 if (
                     is_array
                     and invalid_bounds.any()  # type: ignore[union-attr]
