@@ -147,3 +147,17 @@ class SymmetryFunctionTest(unittest.TestCase):
             ]
         )
         _assert_array_equal(result, expected)
+
+    @parameterized.expand(
+        [
+            [symmetry.REFLECTION_E_W],
+            [symmetry.REFLECTION_N_S],
+            [symmetry.REFLECTION_NE_SW],
+            [symmetry.REFLECTION_NW_SE],
+            [symmetry.ROTATION_180],
+            [symmetry.ROTATION_90],
+        ]
+    )
+    def test_with_batch(self, sym):
+        arr = jnp.ones((1, 10, 13, 13))
+        symmetry.symmetrize(arr, (sym,))
