@@ -36,13 +36,13 @@ def symmetrize(
 def _reflection_ne_sw(array: jnp.ndarray) -> jnp.ndarray:
     """Transform `array` to have reflection symmetry about the ne-sw axis."""
     assert array.shape[-2] == array.shape[-1]
-    return (array + array[..., ::-1, ::-1].T) / 2
+    return (array + jnp.swapaxes(array[..., ::-1, ::-1], -2, -1)) / 2
 
 
 def _reflection_nw_se(array: jnp.ndarray) -> jnp.ndarray:
     """Transform `array` to have reflection symmetry about the nw-se axis."""
     assert array.shape[-2] == array.shape[-1]
-    return (array + array.T) / 2
+    return (array + jnp.swapaxes(array, -2, -1)) / 2
 
 
 def _reflection_n_s(array: jnp.ndarray) -> jnp.ndarray:
