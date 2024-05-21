@@ -80,8 +80,13 @@ class BoundedArray:
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        """Returns the shape of the array."""
+        """Return the shape of the array."""
         return jnp.shape(self.array)  # type: ignore[no-any-return]
+
+    @property
+    def ndim(self) -> int:
+        """Return the number of dimensions of the array."""
+        return int(jnp.ndim(self.array))
 
 
 def _flatten_bounded_array(
@@ -252,8 +257,13 @@ class Density2DArray:
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        """Returns the shape of the array."""
+        """Return the shape of the array."""
         return jnp.shape(self.array)  # type: ignore[no-any-return]
+
+    @property
+    def ndim(self) -> int:
+        """Return the number of dimensions of the array."""
+        return int(jnp.ndim(self.array))
 
 
 def _flatten_density_2d(
