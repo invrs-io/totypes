@@ -57,13 +57,18 @@ def _reflection_e_w(array: jnp.ndarray) -> jnp.ndarray:
 
 def _rotation_180(array: jnp.ndarray) -> jnp.ndarray:
     """Transform `array` to have 180-degree rotational symmetry."""
-    return (array + jnp.rot90(array, 2)) / 2
+    return (array + jnp.rot90(array, 2, axes=(-2, -1))) / 2
 
 
 def _rotation_90(array: jnp.ndarray) -> jnp.ndarray:
     """Transform `array` to have 90-degree rotational symmetry."""
     assert array.shape[-2] == array.shape[-1]
-    return (array + jnp.rot90(array, 1) + jnp.rot90(array, 2) + jnp.rot90(array, 3)) / 4
+    return (
+        array
+        + jnp.rot90(array, 1, axes=(-2, -1))
+        + jnp.rot90(array, 2, axes=(-2, -1))
+        + jnp.rot90(array, 3, axes=(-2, -1))
+    ) / 4
 
 
 SYMMETRY_FNS = {

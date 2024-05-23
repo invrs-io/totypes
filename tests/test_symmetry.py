@@ -159,5 +159,5 @@ class SymmetryFunctionTest(unittest.TestCase):
         ]
     )
     def test_with_batch(self, sym):
-        arr = jnp.ones((1, 10, 13, 13))
+        arr = jnp.ones((8, 13, 13))
         symmetry.symmetrize(arr, (sym,))
