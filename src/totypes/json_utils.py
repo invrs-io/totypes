@@ -6,6 +6,7 @@ Copyright (c) 2023 The INVRS-IO authors.
 import base64
 import dataclasses
 import json
+import warnings
 from typing import Any, Dict, Sequence, Tuple, Union
 
 import jax.numpy as jnp
@@ -38,7 +39,7 @@ def register_custom_type(custom_type: Any) -> None:
             f"Only dataclasses and namedtuples are supported, but got {custom_type}."
         )
     if custom_type in _CUSTOM_TYPE_REGISTRY.values():
-        raise ValueError(f"Duplicate custom type registration for {custom_type}.")
+        warnings.warn(f"Duplicate custom type registration for {custom_type}.")
     prefix = _prefix_for_custom_type(custom_type)
     _validate_prefix(prefix, list(_CUSTOM_TYPE_REGISTRY.keys()))
     _CUSTOM_TYPE_REGISTRY[prefix] = custom_type
@@ -54,8 +55,9 @@ def _validate_prefix(test_prefix: str, existing_prefixes: Sequence[str]) -> None
     for p in existing_prefixes:
         if (
             p.startswith(_PREFIX_ARRAY)
-            or p.startswith(test_prefix)
-            or test_prefix.startswith(p)
+            or p.startswith(_PREFIX_COMPLEX)
+            or (p.startswith(test_prefix) and p != test_prefix)
+            or (test_prefix.startswith(p) and p != test_prefix)
         ):
             raise ValueError(
                 f"Prefix {test_prefix} confilcts with existing {existing_prefixes}."
