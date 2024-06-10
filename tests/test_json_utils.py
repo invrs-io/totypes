@@ -325,5 +325,5 @@ class RegisterCustomTypeValidation(unittest.TestCase):
             pass
 
         json_utils.register_custom_type(MyClass123)
-        with self.assertRaisesRegex(ValueError, "Duplicate custom type registration"):
+        with self.assertWarnsRegex(UserWarning, "Duplicate custom type registration"):
             json_utils.register_custom_type(MyClass123)
