@@ -91,19 +91,19 @@ class BoundedArray:
 
 def _flatten_bounded_array(
     bounded_array: BoundedArray,
-) -> Tuple[Tuple[ArrayOrScalar], Tuple["_HashableWrapper", "_HashableWrapper"]]:
+) -> Tuple[Tuple[ArrayOrScalar], Tuple["HashableWrapper", "HashableWrapper"]]:
     """Flattens a `BoundedArray` into children and auxilliary data."""
     return (
         (bounded_array.array,),
         (
-            _HashableWrapper(bounded_array.lower_bound),
-            _HashableWrapper(bounded_array.upper_bound),
+            HashableWrapper(bounded_array.lower_bound),
+            HashableWrapper(bounded_array.upper_bound),
         ),
     )
 
 
 def _unflatten_bounded_array(
-    aux: Tuple["_HashableWrapper", "_HashableWrapper"],
+    aux: Tuple["HashableWrapper", "HashableWrapper"],
     children: Tuple[ArrayOrScalar],
 ) -> BoundedArray:
     """Unflattens a flattened `BoundedArray`."""
@@ -161,11 +161,14 @@ class Density2DArray:
     fixed_void: Optional[Array] = None
     minimum_width: int = 1
     minimum_spacing: int = 1
-    periodic: Sequence[bool] = (False, False)
+    periodic: Tuple[bool, bool] = (False, False)
     symmetries: Sequence[str] = ()
 
     def __post_init__(self) -> None:
-        self.periodic = tuple(self.periodic)
+        if len(self.periodic) != 2:
+            raise ValueError(f"`periodic` must be length-2, but got {self.periodic}")
+
+        self.periodic = (self.periodic[0], self.periodic[1])
         self.symmetries = tuple(self.symmetries)
 
         # Attributes may be strings if they are serialized, or jax tracers
@@ -273,8 +276,8 @@ def _flatten_density_2d(
     Tuple[
         float,
         float,
-        "_HashableWrapper",
-        "_HashableWrapper",
+        "HashableWrapper",
+        "HashableWrapper",
         int,
         int,
         Sequence[bool],
@@ -287,8 +290,8 @@ def _flatten_density_2d(
         (
             density.lower_bound,
             density.upper_bound,
-            _HashableWrapper(density.fixed_solid),
-            _HashableWrapper(density.fixed_void),
+            HashableWrapper(density.fixed_solid),
+            HashableWrapper(density.fixed_void),
             density.minimum_width,
             density.minimum_spacing,
             density.periodic,
@@ -301,8 +304,8 @@ def _unflatten_density_2d(
     aux: Tuple[
         float,
         float,
-        "_HashableWrapper",
-        "_HashableWrapper",
+        "HashableWrapper",
+        "HashableWrapper",
         int,
         int,
         Sequence[bool],
@@ -330,7 +333,7 @@ def _unflatten_density_2d(
         fixed_void=wrapped_fixed_void.array,
         minimum_width=minimum_width,
         minimum_spacing=minimum_spacing,
-        periodic=tuple(periodic),
+        periodic=tuple(periodic),  # type: ignore[arg-type]
         symmetries=tuple(symmetries),
     )
 
@@ -359,7 +362,7 @@ def symmetrize_density(density: Density2DArray) -> Density2DArray:
 
 
 @dataclasses.dataclass
-class _HashableWrapper:
+class HashableWrapper:
     """Wraps arrays or scalars, making them hashable."""
 
     array: Optional[ArrayOrScalar]
@@ -370,7 +373,7 @@ class _HashableWrapper:
         return hash(self.array)
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, _HashableWrapper):
+        if not isinstance(other, HashableWrapper):
             raise NotImplementedError(
                 f"Comparison with {type(other)} is not implemented."
             )
