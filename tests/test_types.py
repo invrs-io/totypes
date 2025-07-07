@@ -56,8 +56,8 @@ class Density2DArrayTest(unittest.TestCase):
                 array=jnp.arange(10),
                 lower_bound=-1.0,
                 upper_bound=1.0,
-                fixed_solid=jnp.zeros((5, 2), dtype=bool),
-                fixed_void=jnp.zeros((5, 2), dtype=bool),
+                fixed_solid=onp.zeros((5, 2), dtype=bool),
+                fixed_void=onp.zeros((5, 2), dtype=bool),
                 minimum_width=0,
                 minimum_spacing=1,
             )
@@ -70,8 +70,8 @@ class Density2DArrayTest(unittest.TestCase):
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
-                fixed_solid=jnp.zeros((5, 3), dtype=bool),
-                fixed_void=jnp.zeros((5, 2), dtype=bool),
+                fixed_solid=onp.zeros((5, 3), dtype=bool),
+                fixed_void=onp.zeros((5, 2), dtype=bool),
                 minimum_width=0,
                 minimum_spacing=1,
             )
@@ -84,8 +84,8 @@ class Density2DArrayTest(unittest.TestCase):
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
-                fixed_solid=jnp.zeros((5, 2), dtype=bool),
-                fixed_void=jnp.zeros((5, 3), dtype=bool),
+                fixed_solid=onp.zeros((5, 2), dtype=bool),
+                fixed_void=onp.zeros((5, 3), dtype=bool),
                 minimum_width=0,
                 minimum_spacing=1,
             )
@@ -98,8 +98,8 @@ class Density2DArrayTest(unittest.TestCase):
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
-                fixed_solid=jnp.zeros((5, 2), dtype=int),
-                fixed_void=jnp.zeros((5, 2), dtype=bool),
+                fixed_solid=onp.zeros((5, 2), dtype=int),
+                fixed_void=onp.zeros((5, 2), dtype=bool),
                 minimum_width=0,
                 minimum_spacing=1,
             )
@@ -112,8 +112,8 @@ class Density2DArrayTest(unittest.TestCase):
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
-                fixed_solid=jnp.zeros((5, 2), dtype=bool),
-                fixed_void=jnp.zeros((5, 2), dtype=int),
+                fixed_solid=onp.zeros((5, 2), dtype=bool),
+                fixed_void=onp.zeros((5, 2), dtype=int),
                 minimum_width=0,
                 minimum_spacing=1,
             )
@@ -126,8 +126,8 @@ class Density2DArrayTest(unittest.TestCase):
                 array=jnp.arange(10).reshape(5, 2),
                 lower_bound=-1.0,
                 upper_bound=1.0,
-                fixed_solid=jnp.ones((5, 2), dtype=bool),
-                fixed_void=jnp.ones((5, 2), dtype=bool),
+                fixed_solid=onp.ones((5, 2), dtype=bool),
+                fixed_void=onp.ones((5, 2), dtype=bool),
                 minimum_width=0,
                 minimum_spacing=1,
             )
@@ -173,8 +173,8 @@ class Density2DArrayTest(unittest.TestCase):
             array=jnp.arange(0, 10).reshape(2, 5),
             lower_bound=-1.0,
             upper_bound=1.0,
-            fixed_solid=(jnp.arange(0, 10).reshape(2, 5) < 3),
-            fixed_void=(jnp.arange(0, 10).reshape(2, 5) > 7),
+            fixed_solid=(onp.arange(0, 10).reshape(2, 5) < 3),
+            fixed_void=(onp.arange(0, 10).reshape(2, 5) > 7),
             minimum_width=1,
             minimum_spacing=2,
         )
@@ -187,8 +187,8 @@ class Density2DArrayTest(unittest.TestCase):
             array=jnp.arange(0, 30).reshape(3, 2, 5).astype(float),
             lower_bound=-1.0,
             upper_bound=1.0,
-            fixed_solid=jnp.ones((2, 5), dtype=bool),
-            fixed_void=jnp.zeros((2, 5), dtype=bool),
+            fixed_solid=onp.ones((2, 5), dtype=bool),
+            fixed_void=onp.zeros((2, 5), dtype=bool),
             minimum_width=1,
             minimum_spacing=2,
         )
@@ -217,8 +217,8 @@ class Density2DArrayTest(unittest.TestCase):
             array=jnp.arange(0, 10).reshape(2, 5).astype(float),
             lower_bound=-1.0,
             upper_bound=1.0,
-            fixed_solid=(jnp.arange(0, 10).reshape(2, 5) < 3),
-            fixed_void=(jnp.arange(0, 10).reshape(2, 5) > 7),
+            fixed_solid=(onp.arange(0, 10).reshape(2, 5) < 3),
+            fixed_void=(onp.arange(0, 10).reshape(2, 5) > 7),
             minimum_width=1,
             minimum_spacing=2,
         )
@@ -249,15 +249,15 @@ class OptimzizeTest(unittest.TestCase):
             [
                 types.Density2DArray(
                     array=jnp.ones((10, 10)),
-                    fixed_solid=jnp.zeros((10, 10), dtype=bool),
+                    fixed_solid=onp.zeros((10, 10), dtype=bool),
                     fixed_void=None,
                 )
             ],
             [
                 types.Density2DArray(
                     array=jnp.ones((10, 10)),
-                    fixed_solid=jnp.zeros((10, 10), dtype=bool),
-                    fixed_void=jnp.zeros((10, 10), dtype=bool),
+                    fixed_solid=onp.zeros((10, 10), dtype=bool),
+                    fixed_void=onp.zeros((10, 10), dtype=bool),
                 )
             ],
         ]
