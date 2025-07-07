@@ -29,8 +29,8 @@ class BoundedArray:
 
     Attributes:
         array: A jax or numpy array, or a python scalar.
-        lower_bound: The optional declared lower bound for `array`; must be
-            broadcast compatible with `array`.
+        lower_bound: The optional declared lower bound for `array`; must be broadcast
+            compatible with `array`.
         upper_bound: The optional declared upper bound for `array`.
     """
 
@@ -134,31 +134,31 @@ json_utils.register_custom_type(BoundedArray)
 class Density2DArray:
     """Stores an array representing a 2D density.
 
-    Intended constraints such as the bounds, and minimum width and spacing
-    of features are specified by the attributes of a `Density`. Note that
-    these are merely the intended constraints and characteristics, and these
-    must be recognized and enforced by an optimizer to ensure that densities
-    meeting the constraints are obtained.
+    Intended constraints such as the bounds, and minimum width and spacing of features
+    are specified by the attributes of a `Density`. Note that these are merely the
+    intended constraints and characteristics, and these must be recognized and enforced
+    by an optimizer to ensure that densities meeting the constraints are obtained.
 
     Attributes:
         array: A jax or numpy array representing density, with at least rank 2.
         lower_bound: The numeric value associated with solid pixels.
         upper_bound: The numeric value associated with void pixels.
-        fixed_solid: Optional array identifying pixels to be fixed solid.
+        fixed_solid: Optional array identifying pixels to be fixed solid; must not be
+            a jax array.
         fixed_void: Optional array identifying pixels to be fixed void.
         minimum_width: The minimum width of solid features.
         minimum_spacing: The minimum spacing of solid features.
-        periodic: Specifies which of the two spatial dimensions should use
-            periodic boundary conditions.
-        symmetries: A sequence of strings specifying the symmetries of the
-            array. Some symmetries require that the array have a square shape.
+        periodic: Specifies which of the two spatial dimensions should use periodic
+            boundary conditions.
+        symmetries: A sequence of strings specifying the symmetries of the array. Some
+            Some symmetries require that the array have a square shape.
     """
 
     array: Array
     lower_bound: float = -1.0
     upper_bound: float = 1.0
-    fixed_solid: Optional[Array] = None
-    fixed_void: Optional[Array] = None
+    fixed_solid: Optional[onp.ndarray] = None
+    fixed_void: Optional[onp.ndarray] = None
     minimum_width: int = 1
     minimum_spacing: int = 1
     periodic: Tuple[bool, bool] = (False, False)
@@ -191,6 +191,13 @@ class Density2DArray:
                 f"{self.lower_bound} and {self.upper_bound}"
             )
 
+        if self.fixed_solid is not None and not isinstance(
+            self.fixed_solid, onp.ndarray
+        ):
+            raise ValueError(
+                f"`fixed_solid` must be `None` or a numpy array, but got "
+                f"{type(self.fixed_solid)}"
+            )
         if self.fixed_solid is not None and (
             jnp.ndim(self.fixed_solid) > jnp.ndim(self.array)
             or self.fixed_solid.shape[-2:] != self.array.shape[-2:]
@@ -201,6 +208,12 @@ class Density2DArray:
             raise ValueError(
                 f"`fixed_solid` must have shape matching `array`, but got shape "
                 f"{self.fixed_solid.shape} when `array` has shape {self.array.shape}."
+            )
+
+        if self.fixed_void is not None and not isinstance(self.fixed_void, onp.ndarray):
+            raise ValueError(
+                f"`fixed_void` must be `None` or a numpy array, but got "
+                f"{type(self.fixed_void)}"
             )
         if self.fixed_void is not None and (
             jnp.ndim(self.fixed_void) > jnp.ndim(self.array)
