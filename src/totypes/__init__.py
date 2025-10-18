@@ -1,6 +1,6 @@
 """totypes - Custom datatypes useful in a topology optimization context.
 
-Copyright (c) 2023 The INVRS-IO authors.
+Copyright (c) 2025 invrs.io LLC
 """
 
 __version__ = "v0.9.0"
