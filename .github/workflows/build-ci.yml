@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.13"
           cache: "pip"
           cache-dependency-path: pyproject.toml
       - name: Test pre-commit hooks
@@ -36,7 +36,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.13"
           cache: "pip"
           cache-dependency-path: pyproject.toml
 
@@ -49,8 +49,12 @@ jobs:
         run: |
           darglint src --strictness=short --ignore-raise=ValueError
 
-  tests-jax-latest:
+  tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.13"]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -58,7 +62,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: pyproject.toml
 
@@ -66,29 +70,6 @@ jobs:
         run: |
             python -m pip install --upgrade pip
             pip install ".[tests,dev]"
-
-      - name: Run Python tests
-        run: |
-          pytest --cov=totypes tests
-
-  tests-jax-0_4_31:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.10"
-          cache: "pip"
-          cache-dependency-path: pyproject.toml
-
-      - name: Setup environment
-        run: |
-            python -m pip install --upgrade pip
-            pip install ".[tests,dev]"
-            pip install --upgrade "jax==0.4.31"
 
       - name: Run Python tests
         run: |
