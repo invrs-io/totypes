@@ -16,6 +16,11 @@ from totypes import symmetry, types
 
 
 class BoundedArrayTest(unittest.TestCase):
+    def assertBoundedArraysEqual(self, a, b):
+        onp.testing.assert_array_equal(a.array, b.array)
+        onp.testing.assert_array_equal(a.lower_bound, b.lower_bound)
+        onp.testing.assert_array_equal(a.upper_bound, b.upper_bound)
+
     @parameterized.expand([[(1, 5, 4, 3)], [(5, 1, 2)]])
     def test_lower_bound_shape_validation(self, invalid_bound_shape):
         with self.assertRaisesRegex(
@@ -46,10 +51,19 @@ class BoundedArrayTest(unittest.TestCase):
         )
         leaves, treedef = jax.tree_util.tree_flatten(ba)
         restored_ba = jax.tree_util.tree_unflatten(treedef, leaves)
-        onp.testing.assert_array_equal(ba, restored_ba)
+        self.assertBoundedArraysEqual(ba, restored_ba)
 
 
 class Density2DArrayTest(unittest.TestCase):
+    def assertDensitiesEqual(self, a, b):
+        onp.testing.assert_array_equal(a.array, b.array)
+        onp.testing.assert_array_equal(a.fixed_solid, b.fixed_solid)
+        onp.testing.assert_array_equal(a.fixed_void, b.fixed_void)
+        self.assertEqual(a.minimum_width, b.minimum_width)
+        self.assertEqual(a.minimum_spacing, b.minimum_spacing)
+        self.assertEqual(a.periodic, b.periodic)
+        self.assertEqual(a.symmetries, b.symmetries)
+
     def test_density_ndim_validation(self):
         with self.assertRaisesRegex(ValueError, "`array` must be at least rank-2,"):
             types.Density2DArray(
@@ -180,7 +194,7 @@ class Density2DArrayTest(unittest.TestCase):
         )
         leaves, treedef = jax.tree_util.tree_flatten(density)
         restored_density = jax.tree_util.tree_unflatten(treedef, leaves)
-        onp.testing.assert_array_equal(density, restored_density)
+        self.assertDensitiesEqual(density, restored_density)
 
     def test_broadcast_fixed_pixels(self):
         density = types.Density2DArray(
