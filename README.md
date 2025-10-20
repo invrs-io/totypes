@@ -1,6 +1,6 @@
 # totypes - Custom types for topology optimization
-![Continuous integration](https://github.com/invrs-io/totypes/actions/workflows/build-ci.yml/badge.svg)
-![PyPI version](https://img.shields.io/pypi/v/totypes)
+[![Continuous integration](https://github.com/invrs-io/totypes/actions/workflows/build-ci.yml/badge.svg)](https://github.com/invrs-io/agjax/actions)
+[![PyPI version](https://img.shields.io/pypi/v/totypes)](https://pypi.org/project/totypes/)
 
 ## Overview
 
